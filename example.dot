@@ -1,0 +1,8 @@
+digraph t123 {
+ a [label="f1"];
+ b [label="f2"];
+ c [label="f3"];
+ a -> b;
+ a -> c;
+ b -> c;
+}
