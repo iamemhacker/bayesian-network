@@ -1,5 +1,5 @@
 SBT:=sbt
-MODULE:=ltcPrediction
+MODULE:=bayesianNetwork
 
 # Dependent sources.
 SRC:=$(shell find $(MODULE) -name '*.scala')
@@ -10,13 +10,13 @@ JAR_PATH:=$(MODULE)/target/scala-2.12
 # The jar that holds the main class.
 TRGT_JAR:=$(JAR_PATH)/assembly.jar
 
-# The satelite dependency jars of the application.
+# The satellite dependency jars of the application.
 DEPS:= $(shell find $(JAR_PATH) -name '*.jar')
 
-EXP_FILE:=ltcPrediction/src/main/python/run_export.py
+EXP_FILE:=bayesianNetwork/src/main/python/run_export.py
 
 $(TRGT_JAR): $(SRC) build.sbt
-	$(SBT) assembly
+	$(SBT) compile
 
 deps:
 	@echo $(DEPS)
