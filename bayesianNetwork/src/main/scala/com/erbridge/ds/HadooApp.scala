@@ -10,7 +10,8 @@ import com.typesafe.scalalogging.LazyLogging
 
 
 object HadoopApp extends LazyLogging with SparkRemote {
-  val dataDir = config.getString("data.path")
+  val dataDir = config.getString("data.root_dir")
+  val rawPath = s"${dataDir}/raw/"
   val featuresPath = s"${dataDir}/features/"
   val oraclePath = s"${dataDir}/oracle/"
   val modelPath = s"${dataDir}/model/"
@@ -19,7 +20,6 @@ object HadoopApp extends LazyLogging with SparkRemote {
   def appName(): String  = {
     "Bayesian Network"
   }
-
 
   def getDtWindow(config: Config): (String, String) = {
     (config.getString("deploy.dt-beg"), config.getString("deploy.dt-end"))
@@ -30,15 +30,13 @@ object HadoopApp extends LazyLogging with SparkRemote {
   }
 
   def run(args: Array[String]): Unit = {
-    val dbApi = new ApiFactory(spark).createRemote()
-    val config = ConfigFactory.load()
     val runMode = config.getString("deploy.run-mode") 
     val (dtBeg, dtEnd) = getDtWindow(config)
     val pathDt = (path: String) => pathFormat(path, dtBeg, dtEnd)
   
     val runner = runMode match {
       case "features-extraction" => {
-        RunnerFactory.extractFeatures()
+        RunnerFactory.extractFeatures(rawPath, featuresPath)
       }
       case "topology-builder" => {
         RunnerFactory.buildNetwork(
@@ -82,6 +80,6 @@ object HadoopApp extends LazyLogging with SparkRemote {
         IllegalArgumentException(s"Unknown run mode ${default}")
     }
 
-    runner.run(spark)
+    runner.run(spark, None)
   }
 }

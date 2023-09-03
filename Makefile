@@ -1,22 +1,20 @@
 SBT:=sbt
 MODULE:=bayesianNetwork
+MODULE_LC=$(shell echo $(MODULE) | tr '[:upper]' '[:lower]')
+SCALA_VERSION:=2.13
 
 # Dependent sources.
 SRC:=$(shell find $(MODULE) -name '*.scala')
 
-# STB output path.
-JAR_PATH:=$(MODULE)/target/scala-2.12
-
-# The jar that holds the main class.
-TRGT_JAR:=$(JAR_PATH)/assembly.jar
+TRGT_JAR:=$(MODULE)/target/scala-$(SCALA_VERSION)/$(MODULE)-assembly-0.0.1.jar
 
 # The satellite dependency jars of the application.
-DEPS:= $(shell find $(JAR_PATH) -name '*.jar')
+#DEPS:= $(shell find $(JAR_PATH) -name '*.jar')
 
 EXP_FILE:=bayesianNetwork/src/main/python/run_export.py
 
 $(TRGT_JAR): $(SRC) build.sbt
-	$(SBT) compile
+	$(SBT) assembly
 
 deps:
 	@echo $(DEPS)
@@ -29,15 +27,16 @@ build: $(TRGT_JAR)
 download: $(TRGT_JAR)
 	$(SBT) $(MODULE)/"sparkSubmit --conf sgprod/download_config"
 
+# 		--jars $(shell echo $(DEPS) | sed 's/ /,/') \
+
 local_feature_extraction: $(TRGT_JAR)
 	spark-submit \
 		--master local \
 		--driver-memory 4g \
 		--executor-memory 2g \
-		--jars $(shell echo $(DEPS) | sed 's/ /,/') \
-		--class com.agoda.ds.LocalApp \
+		--class com.erbridge.ds.LocalApp \
 		$(TRGT_JAR) \
-	  features-extraction
+		features-extraction
 
 remote_feature_extraction: $(TRGT_JAR)
 	$(SBT) $(MODULE)/"sparkSubmit --conf sgprod/features"

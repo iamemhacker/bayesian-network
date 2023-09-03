@@ -9,7 +9,7 @@ case class Node(
   cardinality: Int
 )
 
-case class Edge(src: Int, dst: Int, score: Double)
+case class Edge(src: Int, dst: Int, score: Double=0.0)
 
 
 class Graph(val nodes: List[Node], val edges: List[Edge]) extends Serializable {

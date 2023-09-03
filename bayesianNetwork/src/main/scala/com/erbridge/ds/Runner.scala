@@ -1,5 +1,6 @@
 package com.erbridge.ds
 
+import org.apache.log4j.Logger
 import org.apache.spark.sql.{SparkSession, functions => F, DataFrame, Dataset,
   Column}
 import com.erbridge.ds.types._
@@ -15,7 +16,7 @@ import Utils.chaining._
 
 
 trait Runner {
-  def run(spark: SparkSession): Unit
+  def run(spark: SparkSession, logger: Option[Logger]): Unit
 }
 
 /**
@@ -35,15 +36,21 @@ object RunnerFactory {
     Array(1, 2, 3)
   }
 
+  def getLogger = (logger: Option[Logger]) => logger.getOrElse(Logger.getRootLogger())
+
 
   /**
    * Feature extraction.
    **/
-  def extractFeatures(/*Add parameters to the task as  you please*/): Runner = {
+  def extractFeatures(inputPath: String, outputPath: String): Runner = {
 
     return new Runner {
 
-      def run(spark: SparkSession): Unit = {}
+      def run(spark: SparkSession, logger: Option[Logger]): Unit = {
+        getLogger(logger).info(s"EM Running extractFeatures")
+        val df = spark.read.csv(inputPath)
+        df.show()
+      }
 
     }
   }
@@ -53,7 +60,7 @@ object RunnerFactory {
                    modelOutputPath: String) : Runner = {
     return new Runner {
 
-      def run(spark: SparkSession): Unit = {
+      def run(spark: SparkSession, logger: Option[Logger]): Unit = {
         import spark.implicits._
 
         println(s"""Running network builder with
@@ -77,7 +84,7 @@ object RunnerFactory {
                    sampleRate: Option[Double]=None): Runner = {
     return new Runner {
 
-      def run(spark: SparkSession): Unit = {
+      def run(spark: SparkSession, logger: Option[Logger]): Unit = {
         import spark.implicits._
         
         println(s""" Running network query with
@@ -107,7 +114,7 @@ object RunnerFactory {
   def oracle(predictionInputPath: String,
              probabilitiesOutputPath: String): Runner = {
     return new Runner {
-      def run(spark: SparkSession): Unit = {
+      def run(spark: SparkSession, logger: Option[Logger]): Unit = {
         import spark.implicits._
 
         println(s"""Running oracle with:
@@ -131,7 +138,7 @@ object RunnerFactory {
                  validationOutputPath: String): Runner = {
 
     return new Runner {
-      def run(spark: SparkSession): Unit = {
+      def run(spark: SparkSession, logger: Option[Logger]): Unit = {
         import spark.implicits._
 
         println(s"""=== Running validation with ===

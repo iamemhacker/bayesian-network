@@ -15,10 +15,6 @@ val v = new {
   val scalaLogging = "3.9.4"
 }
 
-val baseDependencies = Seq(
-  "org.scalatest" %% "scalatest" % v.scalatest % "test",
-)
-
 val hadoopDependencies = Seq(
   "org.apache.hadoop" % "hadoop-common"                 % v.hadoop,
   "org.apache.hadoop" % "hadoop-mapreduce-client-core"  % v.hadoop
@@ -35,11 +31,15 @@ val misc = Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % v.scalaLogging
 )
 
+val test = Seq(
+  "org.scalatest" %% "scalatest" % v.scalatest % "test",
+)
 
 lazy val bayesianNetwork = project
   .settings(baseSettings: _*)
   .settings(
     name := "bayesianNetwork",
     libraryDependencies ++= spark,
-    libraryDependencies ++= misc
+    libraryDependencies ++= misc,
+    libraryDependencies ++= test
  )
