@@ -46,10 +46,15 @@ object RunnerFactory {
 
     return new Runner {
 
-      def run(spark: SparkSession, logger: Option[Logger]): Unit = {
-        getLogger(logger).info(s"EM Running extractFeatures")
-        val df = spark.read.csv(inputPath)
-        df.show()
+      def run(spark: SparkSession, log: Option[Logger]): Unit = {
+        val logger = getLogger(log)
+        logger.info(s"EM Running extractFeatures")
+        val dfInput = spark.read
+            .option("header", true)
+            .csv(inputPath)
+        val df = Conversions.toCanonicalForm(spark, dfInput)
+        logger.info(s"EM features extraction has finished, writing output")
+        df.write.mode("overwrite").parquet(outputPath)
       }
 
     }
