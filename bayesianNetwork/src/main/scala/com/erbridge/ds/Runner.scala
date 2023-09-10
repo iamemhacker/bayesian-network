@@ -23,18 +23,6 @@ trait Runner {
  * Factory for spark runnables.
  **/
 object RunnerFactory {
-  val featureNames = () => {
-    // TODO: Implement.
-    Array(
-      "field1",
-      "field2",
-      "field3")
-  }
-
-  val featureCardinalities = () => {
-    // TODO: implement.
-    Array(1, 2, 3)
-  }
 
   def getLogger = (logger: Option[Logger]) => logger.getOrElse(Logger.getRootLogger())
 
@@ -65,10 +53,11 @@ object RunnerFactory {
                    modelOutputPath: String) : Runner = {
     return new Runner {
 
-      def run(spark: SparkSession, logger: Option[Logger]): Unit = {
+      def run(spark: SparkSession, log: Option[Logger]): Unit = {
         import spark.implicits._
 
-        println(s"""Running network builder with
+        val logger = getLogger(log)
+        logger.info(s"""Running network builder with
           | featuresInputPath=${featuresInputPath}
           | modelOutputPath=${modelOutputPath}""".stripMargin('|'))
 
@@ -76,8 +65,10 @@ object RunnerFactory {
         val dsFeatures = spark.read.parquet(featuresInputPath)
           .as[ComponentDiscrete]
 
-        val graph = builder(featureNames(), featureCardinalities(), dsFeatures)
-        println(s"Saving graph to ${modelOutputPath}")
+        val graph = builder(Conversions.featureNames,
+          Conversions.featureCardinalities(dsFeatures),
+          dsFeatures)
+        logger.info(s"Saving graph to ${modelOutputPath}")
         NetworkBuilder.save(spark)(graph, modelOutputPath)
       }
     }
@@ -104,8 +95,9 @@ object RunnerFactory {
           .as[ComponentDiscrete]
         val dsModel = NetworkQuery.fit(
           spark=spark,
-          names=featureNames(),
-          cardinalities=featureCardinalities(),
+          names=Conversions.featureNames,
+          // TODO: what to pass here? why do we need cardinalities here?
+          cardinalities=Conversions.featureCardinalities(null),
           cache=Some(modelInputPath))(data=null)
         NetworkQuery.transform(spark, dsModel)(dsPred)
           .write

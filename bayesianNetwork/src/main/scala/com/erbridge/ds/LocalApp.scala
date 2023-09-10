@@ -11,11 +11,12 @@ object LocalApp extends SparkLocal {
 
   def main(args: Array[String]): Unit = {
     val dataDir = config.getString("data.path")
+    val outDir = config.getString("out.path")
     val rawPath = s"${dataDir}/raw/"
-    val featuresPath = s"${dataDir}/features/"
+    val featuresPath = s"${outDir}/features/"
+    val modelPath = s"${outDir}/model/"
     val predictionPath = s"${dataDir}/prediction"
     val oraclePath = s"${dataDir}/oracle/"
-    val modelPath = s"${dataDir}/model/"
     val probabilitiesPath = s"${dataDir}/probabilities/"
     if (args.length < 1) {
       throw new Exception("invalid command line, missing run mode")
@@ -27,8 +28,8 @@ object LocalApp extends SparkLocal {
         RunnerFactory.extractFeatures(rawPath, featuresPath)
       }
       case "topology-builder" => RunnerFactory.buildNetwork(
-        featuresInputPath="out/features/dt=20220101-20240101/",
-        modelOutputPath="out/network/")
+        featuresInputPath=featuresPath,
+        modelOutputPath=modelPath)
       case "network-query" => RunnerFactory.networkQuery(
         modelInputPath="out/network/*.json",
         predictionInputPath=predictionPath,

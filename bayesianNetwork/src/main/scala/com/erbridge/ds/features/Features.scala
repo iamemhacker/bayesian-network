@@ -1,7 +1,12 @@
 package com.erbridge.ds.features
 
-import org.apache.spark.sql.{Column, functions => F, Dataset, SparkSession,
+import org.apache.spark.sql.{
+  Column,
+  functions => F,
+  Dataset,
+  SparkSession,
   DataFrame}
+import org.apache.spark.sql.expressions.Window
 import com.erbridge.ds.types.{
   ComponentDiscrete,
   DtUtil,
@@ -12,9 +17,43 @@ import org.apache.spark.ml.feature.{Bucketizer, StringIndexer}
 
 object Conversions {
 
-  // Define conversions from source column to discrete columns (of type Int).
-  private def encodeColumn1(df: DataFrame):  DataFrame = {
-    df
+  val featureNames = Array(
+    "PTS",
+    "FGM",
+    "FGA",
+    "FG%",
+    "3PM",
+    "3PA",
+    "3P%",
+    "FTM",
+    "FTA",
+    "FT%",
+    "OREB",
+    "DREB",
+    "REB",
+    "AST",
+    "STL",
+    "BLK",
+    "TOV",
+    "PF", 
+    "EFF",
+    "AST/TOV",
+    "Age",
+    "Birth_Place",
+    "Collage",
+    "Experience",
+    "Height",
+    "Pos",
+    "Team",
+    "Weight",
+    "BMI")
+
+  val featureCardinalities = (ds: Dataset[ComponentDiscrete]) => {
+    val idxCol = (idx: Int) => F.element_at(F.col("features"), idx)
+    val cols = (1 to featureNames.length)
+      .map(idx => F.count_distinct(idxCol(idx)).cast("int").as(s"c${idx}"))
+    val row = ds.select(cols:_*).first
+    Array((0 until row.length).map(idx => row.getInt(idx)):_*)
   }
 
   def toCanonicalForm[T] (
@@ -22,43 +61,31 @@ object Conversions {
     ds: Dataset[T]): Dataset[ComponentDiscrete] = {
       import spark.implicits._
 
-      val featureCols = Seq(
-        "PTS",
-        "FGM",
-        "FGA",
-        "FG%",
-        "3PM",
-        "3P%",
-        "FTM",
-        "FTA",
-        "FT%",
-        "OREB",
-        "DREB",
-        "REB",
-        "AST",
-        "STL",
-        "BLK",
-        "TOV",
-        "PF",
-        "EFF",
-        "AST/TOV",
-        "Age",
-        "Birth_Place",
-        "Collage",
-        "Experience",
-        "Height",
-        "Pos",
-        "Team",
-        "Weight",
-        "BMI"
-      )
-
       val trgtCol = "MIN"
 
       val rename = (name: String) => s"${name}_enc"
 
-      val intCol = (df: DataFrame, inColName: String, outColName: String) => {
-        df.withColumn(outColName, F.col(inColName).cast("int"))
+      def intCol(df: DataFrame, inColName: String, outColName: String, numBuckets: Int=10) = {
+        val win = Window.partitionBy()
+        val percentiles = (0 to numBuckets).map(i => i/numBuckets.toDouble).toArray
+        val dfCasted = df.withColumn("_", F.col(inColName).cast("double"))
+
+        // Calculating the 'splits' array, which is the percentile values of the column.
+        val splits = dfCasted
+          .select(F.percentile_approx(F.col("_"), F.lit(percentiles), F.lit(1000)))
+          .as[Array[Double]]
+          .first
+          .toSet
+          .toArray
+          .sorted
+
+        new Bucketizer()
+          .setInputCol("_")
+          .setOutputCol(outColName)
+          .setSplits(splits)
+          .transform(dfCasted)
+          .drop("_")
+          .select((df.columns.map(F.col) :+ F.col(outColName).cast("int").as(outColName)):_*)
       }
 
       def strCol[T] = (df: DataFrame, inColName: String, outColName: String) => {

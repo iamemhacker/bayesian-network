@@ -46,8 +46,7 @@ local_build_network: $(TRGT_JAR)
 		--master local \
 		--driver-memory 4g \
 		--executor-memory 2g \
-		--jars $(shell echo $(DEPS) | sed 's/ /,/') \
-		--class com.agoda.ds.LocalApp \
+		--class com.erbridge.ds.LocalApp \
 		$(TRGT_JAR) \
 	  topology-builder
 
@@ -60,7 +59,7 @@ local_network_prediction: $(TRGT_JAR)
 		--driver-memory 4g \
 		--executor-memory 2g \
 		--jars $(shell echo $(DEPS) | sed 's/ /,/') \
-		--class com.agoda.ds.LocalApp \
+		--class com.erbridge.ds.LocalApp \
 		$(TRGT_JAR) \
 	  network-query
 
@@ -73,7 +72,7 @@ local_oracle: $(TRGT_JAR)
 		--driver-memory 4g \
 		--executor-memory 2g \
 		--jars $(shell echo $(DEPS) | sed 's/ /,/') \
-		--class com.agoda.ds.LocalApp \
+		--class com.erbridge.ds.LocalApp \
 		$(TRGT_JAR) \
 		oracle
 
@@ -86,7 +85,7 @@ local_validation: $(TRGT_JAR)
 		--driver-memory 4g \
 		--executor-memory 2g \
 		--jars $(shell echo $(DEPS) | sed 's/ /,/') \
-		--class com.agoda.ds.LocalApp \
+		--class com.erbridge.ds.LocalApp \
 		$(TRGT_JAR) \
 		validation
 
@@ -99,10 +98,10 @@ local_export_graph: guard-JSON guard-OUT guard-EDGE_THRESHOLD $(EXP_FILE)
 	open $(OUT:.dot=.png)
 
 test_network_builder: $(TRGT_JAR)
-	$(SBT) "testOnly com.agoda.ds.network.NetworkBuilderTest"
+	$(SBT) "testOnly com.erbridge.ds.network.NetworkBuilderTest"
 
 test_network_query: $(TRGT_JAR)
-	$(SBT) "testOnly com.agoda.ds.network.NetworkQueryTest"
+	$(SBT) "testOnly com.erbridge.ds.network.NetworkQueryTest"
 
 guard-%:
 	@ if [ "${${*}}" = "" ]; then \
